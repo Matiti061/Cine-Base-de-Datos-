@@ -1,0 +1,43 @@
+-- *****************************************************************
+-- 004_validar_entradas.sql
+-- Evita la sobreventa de la sala y que se venda el mismo asiento dos veces.
+-- *****************************************************************
+
+SET search_path TO cine;
+
+CREATE OR REPLACE FUNCTION trg_validar_entrada() RETURNS TRIGGER AS '
+DECLARE
+    capacidad_maxima INT;
+    total_vendido INT;
+    veces_asiento_vendido INT;
+BEGIN
+    SELECT COUNT(*) INTO veces_asiento_vendido
+    FROM entradas
+    WHERE funcion_id = NEW.funcion_id AND asiento_id = NEW.asiento_id;
+
+    IF veces_asiento_vendido > 0 THEN
+        RAISE EXCEPTION ''Este asiento ya lo compraron'';
+    END IF;
+
+    SELECT s.capacidad INTO capacidad_maxima
+    FROM funciones f
+    JOIN salas s ON f.sala_id = s.sala_id
+    WHERE f.funcion_id = NEW.funcion_id;
+
+    SELECT COUNT(*) INTO total_vendido
+    FROM entradas
+    WHERE funcion_id = NEW.funcion_id;
+
+    IF total_vendido >= capacidad_maxima THEN
+        RAISE EXCEPTION ''No quedan entradas para esta funcion'';
+    END IF;
+
+    RETURN NEW;
+END;
+' LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_valida_entrada ON entradas;
+CREATE TRIGGER trg_valida_entrada BEFORE INSERT ON entradas
+FOR EACH ROW EXECUTE FUNCTION trg_validar_entrada();
+
+INSERT INTO schema_migrations (version) VALUES ('004_validar_entradas');

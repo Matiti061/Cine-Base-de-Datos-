@@ -1,0 +1,25 @@
+-- *****************************************************************
+-- 007_vista_disponibilidad.sql
+-- Muestra asientos libres e identificadores al momento de vender.
+-- *****************************************************************
+
+SET search_path TO cine;
+
+CREATE OR REPLACE VIEW vista_disponibilidad_funcion AS
+SELECT 
+    f.funcion_id,
+    s.capacidad - COUNT(e.entrada_id) AS asientos_disponibles,
+    (
+        SELECT string_agg(a.codigo, ', ')
+        FROM asientos a
+        WHERE a.sala_id = f.sala_id 
+          AND a.asiento_id NOT IN (SELECT asiento_id FROM entradas WHERE funcion_id = f.funcion_id)
+    ) AS asientos_libres_identificadores,
+    COUNT(e.entrada_id) AS entradas_vendidas,
+    COUNT(e.entrada_id) * f.precio AS recaudacion
+FROM funciones f
+JOIN salas s ON f.sala_id = s.sala_id
+LEFT JOIN entradas e ON f.funcion_id = e.funcion_id
+GROUP BY f.funcion_id, s.capacidad, f.sala_id, f.precio;
+
+INSERT INTO schema_migrations (version) VALUES ('007_vista_disponibilidad');

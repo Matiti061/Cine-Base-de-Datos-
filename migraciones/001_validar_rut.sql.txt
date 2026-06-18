@@ -1,0 +1,49 @@
+-- *****************************************************************
+-- 001_validar_rut.sql
+-- Valida que el RUT ingresado sea matematicamente correcto.
+-- *****************************************************************
+
+SET search_path TO cine;
+
+CREATE OR REPLACE FUNCTION trg_validar_rut() RETURNS TRIGGER AS '
+DECLARE
+    rut_limpio VARCHAR;
+    rut_numero INT;
+    dv_ingresado CHAR(1);
+    dv_calculado CHAR(1);
+    suma INT := 0;
+    multiplo INT := 2;
+BEGIN
+    rut_limpio := REPLACE(REPLACE(NEW.rut, ''.'', ''''), ''-'', '''');
+    rut_numero := CAST(SUBSTRING(rut_limpio, 1, LENGTH(rut_limpio) - 1) AS INT);
+    dv_ingresado := UPPER(SUBSTRING(rut_limpio, LENGTH(rut_limpio), 1));
+    
+    WHILE rut_numero > 0 LOOP
+        suma := suma + (rut_numero % 10) * multiplo;
+        rut_numero := rut_numero / 10;
+        multiplo := multiplo + 1;
+        IF multiplo > 7 THEN 
+            multiplo := 2; 
+        END IF;
+    END LOOP;
+    
+    dv_calculado := 11 - (suma % 11);
+    IF dv_calculado = ''11'' THEN 
+        dv_calculado := ''0'';
+    ELSIF dv_calculado = ''10'' THEN 
+        dv_calculado := ''K''; 
+    END IF;
+    
+    IF dv_calculado != dv_ingresado THEN
+        RAISE EXCEPTION ''El RUT esta malo'';
+    END IF;
+    
+    RETURN NEW;
+END;
+' LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_valida_rut ON clientes;
+CREATE TRIGGER trg_valida_rut BEFORE INSERT OR UPDATE ON clientes
+FOR EACH ROW EXECUTE FUNCTION trg_validar_rut();
+
+INSERT INTO schema_migrations (version) VALUES ('001_validar_rut');

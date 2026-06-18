@@ -1,0 +1,28 @@
+-- *****************************************************************
+-- 008_datos_prueba.sql
+-- Datos fijos para probar que todo funciona bien.
+-- *****************************************************************
+
+SET search_path TO cine;
+
+INSERT INTO peliculas (titulo, duracion_minutos) VALUES 
+('Dune: Parte Dos', 166), ('Intensa-Mente 2', 96), ('Deadpool & Wolverine', 127), ('Furiosa', 148);
+
+INSERT INTO salas (nombre, capacidad) VALUES ('Sala 1', 4), ('Sala 2', 4);
+
+INSERT INTO asientos (sala_id, codigo) VALUES (1, 'A1'), (1, 'A2'), (1, 'B1'), (1, 'B2');
+INSERT INTO asientos (sala_id, codigo) VALUES (2, 'A1'), (2, 'A2'), (2, 'B1'), (2, 'B2');
+
+INSERT INTO funciones (pelicula_id, sala_id, fecha_hora_inicio, precio) VALUES 
+(1, 1, '2026-06-20 15:00:00', 5000), (2, 2, '2026-06-20 15:30:00', 4000),
+(3, 1, '2026-06-20 19:00:00', 6000), (4, 2, '2026-06-20 20:00:00', 4500);
+
+INSERT INTO clientes (rut, email, nombre) VALUES 
+('11111111-1', 'juan@mail.com', 'Juan Perez'),
+('22222222-2', 'maria@mail.com', 'Maria Gomez'),
+('33333333-3', 'pedro@mail.com', 'Pedro Soto');
+
+INSERT INTO entradas (funcion_id, cliente_id, asiento_id) VALUES 
+(1, 1, 1), (2, 1, 5), (3, 1, 1), (1, 2, 2), (1, 3, 3), (2, 2, 6), (3, 3, 2); 
+
+INSERT INTO schema_migrations (version) VALUES ('008_datos_prueba');
